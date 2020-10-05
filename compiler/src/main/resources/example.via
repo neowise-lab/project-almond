@@ -1,0 +1,66 @@
+# package com.via.samples
+# module all_constructions.via
+# can use as "com/via/samples/all_constructions"
+
+using "lang/math"
+using "lang/arrays" as stdArrays
+
+// this is sample entry module
+
+// VARIABLES
+abc = 12
+// CONSTANTS
+const ABC = 11
+
+// DEFAULT FUNCTION
+func call(appName) {
+
+}
+// SHORT FUNCTION
+add(a, b) -> a + b
+
+
+// FOR
+for (i = 0 downTo 10 step 3) {
+
+}
+
+// FOREACH
+foreach (v : elements) {
+}
+
+foreach (k, v : map) {
+}
+
+while (true) {
+}
+
+do {
+
+} while(true)
+
+if (true) {
+
+}
+else {
+
+}
+
+abs = math.abs(-25)
+
+// ARRAYS
+
+arr = [10]
+multiArr = [10][12][25]
+arr2 = [] {values}
+multiArr2 = [][] { {values1}, {values2} }
+map = {k : v, k1 : v2 ....}
+
+v = obj.method(10)
+
+struct Point(x, y)
+
+func Point::plus(x, y) {
+    this.x += x
+    this.y += y
+}
