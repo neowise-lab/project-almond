@@ -4,92 +4,120 @@ import com.neowise.almond.exceptions.ParseException
 import com.neowise.almond.parser.ast.*
 import com.neowise.almond.parser.ast.expressions.*
 import com.neowise.almond.parser.ast.statements.*
-import com.neowise.almond.parser.lexer.Lexer
 import com.neowise.almond.parser.lexer.Token
 import com.neowise.almond.parser.lexer.TokenType
-import com.neowise.almond.parser.source.Source
 import java.io.EOFException
 import java.util.*
 
+class Parser(private val location: String, private val name: String, private val tokens: List<Token>) {
 
-class Parser {
-
-    private lateinit var tokens: List<Token>
-
+    private val errors = mutableListOf<ParseException>()
+    private var size = tokens.size
     private var pos = 0
-    private var size = 0
 
-    private val errors = ArrayList<ParseException>()
+    fun parse(): Program {
 
-    fun parse(location: String, name: String, source: Source): Program {
+        val nodes = NodeList()
 
-        this.tokens = Lexer(source).tokenize()
-        this.size = tokens.size
-
-        val program = Program(location, name)
         try {
             //В начале определяются используемые модули
             while (match(TokenType.USING)) {
-                program += using()
+                nodes += using()
             }
-
             //Вторыми структуры, функции и поля
             loop@ while(true) {
-                program += when {
+                nodes += when {
                     match(TokenType.STRUCT) -> struct()
-                    match(TokenType.DEFINE) -> functionOrVar()
-                    else -> break@loop
+                    match(TokenType.DEFINE) -> function()
+                    match(TokenType.VAR) -> varDefine(isConst = false)
+                    match(TokenType.CONST) -> varDefine(isConst = true)
+                    else -> {
+                        val current = current();
+                        errors += error(current, "${current.text} not allowed here.")
+                        continue@loop
+                    }
                 }
             }
         }
-        catch(e: EOFException) {
+        catch (e: ParseException) {
+            errors += e
+        }
+        catch (e: EOFException) {
             println("end of file reached!")
         }
-//
-//        //Дальше языковые конструкции
-//        loop@ while(true) {
-//            try {
-//                program += statement()
-//            }
-//            catch (e: EOFException) {
-//                break@loop
-//            }
-//        }
-        return program
+
+        return Program(location, name, nodes, errors.toList())
     }
 
     private fun using() : Node = UsingStatement(consume(TokenType.TEXT))
 
     private fun struct(): Node = StructStatement(consume(TokenType.TEXT), options())
 
-    private fun functionOrVar(): Node {
+    private fun varDefine(isConst: Boolean): Node {
+        consume(TokenType.EQ)
+        val name = consume(TokenType.WORD)
+        return VariableDefineStatement(name, isConst, expression())
+    }
+
+    private fun function(): Node {
         val name = consume(TokenType.WORD)
         return when {
-            match(TokenType.EQ) -> {
-                VariableDefineStatement(name, expression())
-            }
             match(TokenType.COLONCOLON) -> {
+                // Struct::fun(options) {}
                 StructFunctionDefineStatement(name, consume(TokenType.WORD), options(), statementBody())
             }
             else -> {
+                // fun(options) {}
+                // fun(options) -> {}
                 FunctionDefineStatement(name, options(), statementBody())
             }
         }
     }
 
     private fun statement(): Node {
-        return when {
-            match(TokenType.IF) -> ifElse()
-            match(TokenType.FOR) -> forTo()
-            match(TokenType.FOREACH) -> foreach()
-            match(TokenType.REPEAT) -> repeat()
-            match(TokenType.DO) -> doUntil()
-            match(TokenType.MATCH) -> match()
-            match(TokenType.RETURN) -> ret()
-            match(TokenType.ERROR) -> error()
-            match(TokenType.EXTRACT) -> extract()
-            else -> ExpressionStatement(expression())
+        return try {
+             when {
+                match(TokenType.IF) -> ifElse()
+                match(TokenType.FOR) -> forTo()
+                match(TokenType.FOREACH) -> foreach()
+                match(TokenType.REPEAT) -> repeat()
+                match(TokenType.DO) -> doUntil()
+                match(TokenType.MATCH) -> match()
+                match(TokenType.RETURN) -> ret()
+                match(TokenType.ERROR) -> error()
+                match(TokenType.EXTRACT) -> extract()
+                else -> {
+                    val variable = variable()
+                    val current = current()
+
+                    if (variable is FunctionalChainExpression || variable is UnaryExpression) {
+                        ExpressionStatement(variable)
+                    }
+                    else if (AssignOperators.contains(current().type)) {
+                        AssignmentStatement(variable, expression(), current)
+                    }
+                    else throw error(current, "$'{current.text}' not allowed here!")
+                }
+            }
         }
+        catch (e: ParseException) {
+            errors += e
+            recover()
+        }
+    }
+
+    private fun recover(): Node {
+        val preRecoverPosition = pos
+        for (i in preRecoverPosition..size) {
+            pos = i
+            try {
+                // successfully parsed,
+                return statement() // return successfully result
+            } catch (ex: Exception) {
+                // fail
+            }
+        }
+        throw EOFException()
     }
 
     private fun ifElse() : Node {
@@ -376,19 +404,16 @@ class Parser {
 
     private fun primary(): Node {
         val result = lambda()
+
         return when {
-            // if lambda returned result is Lambda, not a Empty value, then return result value
+            // if returned result is Lambda, not a Empty value, then return result value
             (result != EmptyNode) -> result
-            // this...
-            lookMatch(0, TokenType.THIS) -> variableSuffix(ValueExpression(consume(TokenType.THIS)))
             // (expr)
-            match(TokenType.LPAREN) -> expressionInParens()
-            // new SomeInstance() or new [10][20] (multi arrays)
-            match(TokenType.NEW) -> when {
-                lookMatch(0, TokenType.LBRACKET) -> multiArray()
-                lookMatch(0, TokenType.WORD) -> newInstance()
-                else -> throw error(current(), "Expected '[' or Identifier" )
-            }
+            match(TokenType.LPAREN) -> variableSuffix(expressionInParens())
+            // new SomeInstance()
+            match(TokenType.LBRACKET) -> variableSuffix(array())
+            match(TokenType.LBRACE) -> variableSuffix(map())
+
             else -> variable()
         }
     }
@@ -399,34 +424,81 @@ class Parser {
         return variableSuffix(expression)
     }
 
-
-    private fun newInstance() : Node {
-        TODO("Realise the newInstance declaration parsing construction")
-    }
-
-    private fun multiArray() : Node {
-        TODO("Realise the multiArray declaration parsing construction")
-    }
-
     private fun array(): Node {
-        //
-        TODO("Realise the array parsing construction")
+        // [1, 2, 3, 4, 5, ...]
+        val elements = NodeList()
+        // if not reach ']'
+        if (!match(TokenType.RBRACKET))
+            while(true) {
+                elements += expression()
+                // after expression must be ] or comma
+                if (match(TokenType.RBRACKET)) break
+                consume(TokenType.COMMA)
+            }
+
+        return ArrayExpression(elements)
     }
 
     private fun map(): Node {
-        TODO("Realise the map parsing construction")
+        //{key: value, key: value, ...}
+        val keys = NodeList()
+        val values = NodeList()
+        // if not reach '}'
+        if (!match(TokenType.RBRACE))
+            while(true) {
+                // key : value
+                keys += expression()
+                consume(TokenType.COLON)
+                values += expression()
+
+                // after key:value must be } or comma
+                if (match(TokenType.RBRACE)) break
+                consume(TokenType.COMMA)
+            }
+
+        return MapExpression(keys, values)
     }
 
     private fun lambda(): Node {
-        TODO("Realise the lambda parsing construction")
+        val lastPos = pos
+        // if an exception is thrown or no matches, then no lambda further down the code
+        // recover last position and return EmptyNode
+        try {
+            when {
+                // (args) ->
+                lookMatch(0, TokenType.LPAREN) -> {
+                    val options = options()
+                    if (lookMatch(0, TokenType.FUNCTIONAL)) return LambdaExpression(options, statementBody())
+                }
+                // arg ->
+                lookMatch(0, TokenType.WORD) -> {
+                    val options = Options(consume(TokenType.WORD))
+                    return LambdaExpression(options, statementBody())
+                }
+                // ->
+                lookMatch(0, TokenType.FUNCTIONAL) -> return LambdaExpression(Options(), statementBody())
+            }
+        }
+        catch (e: ParseException) {}
+
+        // recover position
+        pos = lastPos
+        return EmptyNode
     }
 
     private fun variable(): Node {
         return when {
             lookMatch(0, TokenType.WORD) -> unknownWords()
-            lookMatch(0, TokenType.THIS) -> variableSuffix(ValueExpression(prev()))
+            match(TokenType.THIS) -> variableSuffix(ValueExpression(prev()))
+            match(TokenType.NEW) -> variableSuffix(newInstance())
             else -> value()
         }
+    }
+
+    private fun newInstance() : Node {
+        val struct = consume(TokenType.WORD)
+        val arguments = arguments()
+        return NewInstanceExpression(struct, arguments)
     }
 
     private fun unknownWords(): Node {
@@ -534,6 +606,10 @@ class Parser {
         return get(0)
     }
 
+    private fun skip() {
+        pos++
+    }
+
     private fun consume(type: TokenType): Token {
         val current = get(0)
         if (type !== current.type) {
@@ -541,6 +617,19 @@ class Parser {
         }
         pos++
         return current
+    }
+
+    private fun multipleMatches(vararg types: TokenType): Boolean {
+        // Remember the last position
+        val recoverPosition = pos;
+        for(type in types) {
+            if (!match(type)) {
+                // if there is no match, return the last position and false
+                pos = recoverPosition
+                return false
+            }
+        }
+        return true
     }
 
     private fun match(type: TokenType): Boolean {
@@ -566,9 +655,7 @@ class Parser {
         return error(current(), error)
     }
 
-    private fun error(token: Token, error: String): Throwable {
-        val err = ParseException(token, error)
-        errors += err
-        return err
+    private fun error(token: Token, error: String): ParseException {
+        return ParseException(token, error)
     }
 }

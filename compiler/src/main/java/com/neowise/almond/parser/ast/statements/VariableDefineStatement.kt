@@ -4,7 +4,7 @@ import com.neowise.almond.parser.ast.Node
 import com.neowise.almond.parser.lexer.Token
 import com.neowise.almond.visitors.Visitor
 
-class VariableDefineStatement(name: Token, expression: Node) : Node {
+class VariableDefineStatement(name: Token, isConst: Boolean, expression: Node) : Node {
     override fun accept(visitor: Visitor) {
         visitor.visit(this)
     }

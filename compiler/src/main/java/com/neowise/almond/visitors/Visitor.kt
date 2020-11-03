@@ -17,6 +17,7 @@ interface Visitor {
     fun visit(variableDefine: VariableDefineStatement)
     fun visit(functionDefine: FunctionDefineStatement)
     fun visit(structFunctionDefine: StructFunctionDefineStatement)
+    fun visit(assignment: AssignmentStatement)
 
     fun visit(returnStatement: ReturnStatement)
 
@@ -43,4 +44,8 @@ interface Visitor {
     fun visit(arrayAccess: ArrayAccessExpression)
     fun visit(objectFunctionReference: ObjectFunctionReferenceExpression)
     fun visit(functionReference: FunctionReferenceExpression)
+    fun visit(newInstance: NewInstanceExpression)
+    fun visit(arrayExpression: ArrayExpression)
+    fun visit(map: MapExpression)
+    fun visit(lambda: LambdaExpression)
 }

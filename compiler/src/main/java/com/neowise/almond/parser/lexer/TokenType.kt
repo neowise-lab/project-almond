@@ -30,6 +30,8 @@ enum class TokenType(val text: String) {
 
     STRUCT("struct"),
     DEFINE("define"),
+    VAR("var"),
+    CONST("const"),
     RETURN("return"),
     USING("using"),
 
