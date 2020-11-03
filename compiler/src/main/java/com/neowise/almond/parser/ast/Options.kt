@@ -6,4 +6,14 @@ class Options(private vararg val options: Token) : ArrayList<Token>() {
     init {
         addAll(options)
     }
+
+    override fun toString(): String {
+        return buildString {
+            append("(")
+            forEach {
+                append("$it, ")
+            }
+            append(")")
+        }
+    }
 }

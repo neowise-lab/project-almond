@@ -9,4 +9,14 @@ class ArrayExpression(val elements: NodeList) : Node {
     override fun accept(visitor: Visitor) {
         visitor.visit(this)
     }
+
+    override fun toString(): String {
+        return buildString {
+            append("[")
+            elements.forEach {
+                append("$it, ")
+            }
+            append("]")
+        }
+    }
 }

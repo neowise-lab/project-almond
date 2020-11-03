@@ -7,4 +7,12 @@ open class NodeList : ArrayList<Node>(), Node {
     override fun accept(visitor: Visitor) {
         visitor.visit(this)
     }
+
+    override fun toString(): String {
+        return buildString {
+            forEach {
+                append("\t $it")
+            }
+        }
+    }
 }

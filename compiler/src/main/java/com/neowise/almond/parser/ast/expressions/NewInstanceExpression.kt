@@ -10,4 +10,12 @@ class NewInstanceExpression(val struct: Token, val arguments: NodeList) : Node {
     override fun accept(visitor: Visitor) {
         visitor.visit(this)
     }
+
+    override fun toString(): String {
+        return "new $struct(" + buildString {
+            arguments.forEach {
+                append("$it, ")
+            }
+        } + ")"
+    }
 }

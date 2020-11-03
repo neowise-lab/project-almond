@@ -4,9 +4,13 @@ import com.neowise.almond.parser.Operator
 import com.neowise.almond.parser.ast.Node
 import com.neowise.almond.visitors.Visitor
 
-class BinaryExpression(operator: Operator, expr1: Node, expr2: Node) : Node {
+class BinaryExpression(val operator: Operator, val expr1: Node, val expr2: Node) : Node {
+
     override fun accept(visitor: Visitor) {
         visitor.visit(this)
     }
 
+    override fun toString(): String {
+        return "$expr1 $operator $expr2"
+    }
 }
