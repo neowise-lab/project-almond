@@ -4,8 +4,12 @@ import com.neowise.almond.parser.ast.EmptyNode
 import com.neowise.almond.parser.ast.Node
 import com.neowise.almond.visitors.Visitor
 
-class IfElseStatement(condition: Node, ifBody: Node, elseBody: Node = EmptyNode) : Node {
+class IfElseStatement(val condition: Node, val ifBody: Node, val elseBody: Node = EmptyNode) : Node {
     override fun accept(visitor: Visitor) {
         visitor.visit(this)
+    }
+
+    override fun toString(): String {
+        return "if($condition) \n $ifBody \n" + if (elseBody != EmptyNode) " else \n$elseBody" else ""
     }
 }

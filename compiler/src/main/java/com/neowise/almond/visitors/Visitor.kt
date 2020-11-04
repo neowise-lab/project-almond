@@ -27,7 +27,7 @@ interface Visitor {
     fun visit(foreachMap: ForeachMapStatement)
 
     fun visit(repeat: RepeatStatement)
-    fun visit(until: UntilStatement)
+    fun visit(until: DoUntilStatement)
     fun visit(match: MatchStatement)
     fun visit(error: ErrorStatement)
     fun visit(extract: ExtractStatement)

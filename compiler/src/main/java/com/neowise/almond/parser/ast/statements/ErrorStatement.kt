@@ -8,4 +8,7 @@ class ErrorStatement(val expression: Node) : Node {
         visitor.visit(this)
     }
 
+    override fun toString(): String {
+        return "error $expression"
+    }
 }

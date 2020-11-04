@@ -6,6 +6,9 @@ import com.neowise.almond.parser.ast.Options
 import com.neowise.almond.parser.lexer.Token
 import com.neowise.almond.visitors.Visitor
 
+/**
+ * Not used
+ */
 class StructFunctionDefineStatement
 (
     val struct: Token,
@@ -16,5 +19,9 @@ class StructFunctionDefineStatement
 
     override fun accept(visitor: Visitor) {
         visitor.visit(this)
+    }
+
+    override fun toString(): String {
+        return "func $struct::$name$options $body"
     }
 }

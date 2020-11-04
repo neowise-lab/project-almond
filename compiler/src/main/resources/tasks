@@ -1,0 +1,24 @@
+test:
+    * using
+    * functions
+    * globals (var/const)
+    * struct
+
+    arrays/access
+    maps
+    fields
+    functional chains
+    func/obj func refs
+    lambdas
+    newInstance
+    ternary
+    chain access
+
+    variables
+    assignment
+    do/until/repeat
+    error
+    extract
+    for/foreach/foreachMap
+    if else
+    match

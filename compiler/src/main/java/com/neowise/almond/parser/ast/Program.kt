@@ -15,6 +15,6 @@ class Program(
     }
 
     override fun toString(): String {
-        return "program $name ($location)\n$nodes"
+        return "program $name <$location>\n$nodes"
     }
 }

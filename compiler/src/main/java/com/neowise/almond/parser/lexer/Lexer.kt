@@ -1,15 +1,38 @@
 package com.neowise.almond.parser.lexer
 
 import com.neowise.almond.exceptions.ParseException
+import com.neowise.almond.parser.lexer.TokenType.*
 import com.neowise.almond.parser.source.Source
 
 open class Lexer(private val source: Source) {
 
-    private val operators: TokenMap = TokenMap()
-    private val keywords: TokenMap = TokenMap()
+    companion object {
+        private const val operatorChars = "+-*/%()[]{}=<>!&|.,^~?:;"
+        private const val whitespaceChars = "\n \t\b\r"
 
-    private val operatorChars = "+-*/%()[]{}=<>!&|.,^~?:;"
-    private val whitespaceChars = "\n \t\b\r"
+        private val operators = tokenMapOf(
+                PLUS, MINUS, STAR, SLASH, PERCENT,
+                LPAREN, RPAREN, LBRACKET, RBRACKET, LBRACE,
+                RBRACE, EQ, LT, GT, DOT, COMMA,
+                CARET, TILDE, QUESTION, COLON,
+
+                EXCL, AMP, BAR, EQEQ, EXCLEQ,
+                LTEQ, GTEQ, PLUSEQ, MINUSEQ, STAREQ,
+                SLASHEQ, PERCENTEQ, AMPEQ, CARETEQ,
+                BAREQ, COLONCOLONEQ, LTLTEQ, GTGTEQ,
+
+                GTGTGTEQ, PLUSPLUS, MINUSMINUS, COLONCOLON,
+                AMPAMP, BARBAR, LTLT, GTGT, GTGTGT,
+                FUNCTIONAL, SEMICOLON
+        )
+
+        private val keywords = tokenMapOf(
+                USING, IF, ELSE, REPEAT, FOR, FOREACH, DO,
+                BREAK, CONTINUE, ERROR, MATCH, STRUCT, FUNC,
+                VAR, CONST, RETURN, CASE, DEFAULT, NEW, EXTRACT,
+                TRUE, FALSE, THIS, IS, NIL
+        )
+    }
 
     private val tokens = mutableListOf<Token>()
     private val buffer = StringBuffer()
@@ -38,12 +61,12 @@ open class Lexer(private val source: Source) {
                     operatorChars.indexOf(current) != -1 -> {
                         tokenizeOperator()
                     }
-                    operatorChars.indexOf(current) != -1 -> {
+                    whitespaceChars.indexOf(current) != -1 -> {
                         // whitespaces
                         source.next()
                     }
                     else -> {
-                        throw error("illegal character '$current'")
+                        throw error("illegal character '$current' at " + source.position())
                     }
                 }
             } catch (e: ParseException) {
@@ -75,7 +98,7 @@ open class Lexer(private val source: Source) {
             buffer.append(current)
             current = source.next()
         }
-        addToken(if (isFloat) TokenType.FLOAT else TokenType.INTEGER, buffer.toString())
+        addToken(if (isFloat) FLOAT else INTEGER, buffer.toString())
     }
 
     private fun tokenizeHexNumber() {
@@ -89,7 +112,7 @@ open class Lexer(private val source: Source) {
             current = source.next()
         }
         if (buffer.isNotEmpty()) {
-            addToken(TokenType.HEX_NUMBER, buffer.toString())
+            addToken(HEX_NUMBER, buffer.toString())
         }
     }
 
@@ -138,7 +161,7 @@ open class Lexer(private val source: Source) {
         if (keywords.containsKey(word)) {
             addToken(keywords[word]!!)
         } else {
-            addToken(TokenType.WORD, word)
+            addToken(WORD, word)
         }
     }
 
@@ -160,7 +183,7 @@ open class Lexer(private val source: Source) {
             current = source.next()
         }
         source.next() // skip closing `
-        addToken(TokenType.WORD, buffer.toString())
+        addToken(WORD, buffer.toString())
     }
 
     private fun tokenizeText() {
@@ -245,10 +268,8 @@ open class Lexer(private val source: Source) {
             current = source.next()
         }
         source.next() // skip closing "
-        addToken(TokenType.TEXT, buffer.toString())
+        addToken(TEXT, buffer.toString())
     }
-
-
 
     private fun tokenizeComment() {
         var current: Char = source.peek(0)

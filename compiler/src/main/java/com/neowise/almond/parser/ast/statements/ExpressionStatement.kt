@@ -8,4 +8,7 @@ class ExpressionStatement(val expression: Node) : Node {
         visitor.visit(this)
     }
 
+    override fun toString(): String {
+        return expression.toString()
+    }
 }

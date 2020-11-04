@@ -2,18 +2,24 @@ package com.neowise.almond.parser.ast
 
 import com.neowise.almond.parser.lexer.Token
 
-class Options(private vararg val options: Token) : ArrayList<Token>() {
+class Options(vararg options: Token) {
+
+    private val options: ArrayList<Token> = ArrayList()
+
     init {
-        addAll(options)
+        this.options += options
+    }
+
+    operator fun plusAssign(token: Token) {
+        options += token
     }
 
     override fun toString(): String {
-        return buildString {
-            append("(")
-            forEach {
+        return "(" + buildString {
+            options.forEach {
                 append("$it, ")
             }
-            append(")")
-        }
+        } + ")"
     }
+
 }

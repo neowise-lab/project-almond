@@ -45,4 +45,8 @@ class Source(private val input: String) {
         this.row = rollback.row
         this.col = rollback.col
     }
+
+    fun position() : String {
+        return "${row+1}:${col}"
+    }
 }

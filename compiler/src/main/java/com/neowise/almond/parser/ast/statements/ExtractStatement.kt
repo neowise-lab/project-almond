@@ -4,9 +4,12 @@ import com.neowise.almond.parser.ast.Node
 import com.neowise.almond.parser.ast.Options
 import com.neowise.almond.visitors.Visitor
 
-class ExtractStatement(options: Options, extractingValue: Node) : Node {
+class ExtractStatement(val options: Options, val extractingValue: Node) : Node {
     override fun accept(visitor: Visitor) {
         visitor.visit(this)
     }
 
+    override fun toString(): String {
+        return "$options = $extractingValue"
+    }
 }

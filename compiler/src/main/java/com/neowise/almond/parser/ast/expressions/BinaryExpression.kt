@@ -11,6 +11,6 @@ class BinaryExpression(val operator: Operator, val expr1: Node, val expr2: Node)
     }
 
     override fun toString(): String {
-        return "$expr1 $operator $expr2"
+        return "$expr1 ${operator.name} $expr2"
     }
 }

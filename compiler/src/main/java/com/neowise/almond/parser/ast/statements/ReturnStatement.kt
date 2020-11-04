@@ -8,4 +8,8 @@ class ReturnStatement(val expr: Node = EmptyNode) : Node {
     override fun accept(visitor: Visitor) {
         visitor.visit(this)
     }
+
+    override fun toString(): String {
+        return "return " + if (expr != EmptyNode) expr else ""
+    }
 }

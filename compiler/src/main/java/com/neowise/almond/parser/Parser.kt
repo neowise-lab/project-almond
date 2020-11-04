@@ -6,6 +6,7 @@ import com.neowise.almond.parser.ast.expressions.*
 import com.neowise.almond.parser.ast.statements.*
 import com.neowise.almond.parser.lexer.Token
 import com.neowise.almond.parser.lexer.TokenType
+import com.neowise.almond.parser.lexer.TokenType.*
 import java.io.EOFException
 import java.util.*
 
@@ -21,18 +22,18 @@ class Parser(private val location: String, private val name: String, private val
 
         try {
             //В начале определяются используемые модули
-            while (match(TokenType.USING)) {
+            while (match(USING)) {
                 nodes += using()
             }
             //Вторыми структуры, функции и поля
             loop@ while(true) {
                 nodes += when {
-                    match(TokenType.STRUCT) -> struct()
-                    match(TokenType.DEFINE) -> function()
-                    match(TokenType.VAR) -> varDefine(isConst = false)
-                    match(TokenType.CONST) -> varDefine(isConst = true)
+                    match(STRUCT) -> struct()
+                    match(FUNC) -> function()
+                    match(VAR) -> varDefine(isConst = false)
+                    match(CONST) -> varDefine(isConst = true)
                     else -> {
-                        val current = current();
+                        val current = current()
                         errors += error(current, "${current.text} not allowed here.")
                         continue@loop
                     }
@@ -41,31 +42,44 @@ class Parser(private val location: String, private val name: String, private val
         }
         catch (e: ParseException) {
             errors += e
+            throw e
         }
         catch (e: EOFException) {
-            println("end of file reached!")
+            println("#parser: end of file reached!")
         }
 
         return Program(location, name, nodes, errors.toList())
     }
 
-    private fun using() : Node = UsingStatement(consume(TokenType.TEXT))
+    private fun using() : Node = UsingStatement(consume(TEXT))
 
-    private fun struct(): Node = StructStatement(consume(TokenType.TEXT), options())
+    private fun struct(): Node {
+        val name = consume(WORD)
+        val options = options()
+        val functions = NodeList()
+        // {
+        if (match(LBRACE))
+            while (!match(RBRACE)) {
+                consume(FUNC)
+                functions += function()
+            }
+
+        return StructStatement(name, options, functions)
+    }
 
     private fun varDefine(isConst: Boolean): Node {
-        consume(TokenType.EQ)
-        val name = consume(TokenType.WORD)
-        return VariableDefineStatement(name, isConst, expression())
+        val name = consume(WORD)
+        consume(EQ)
+        return VariableDefineStatement(name, expression(), isConst)
     }
 
     private fun function(): Node {
-        val name = consume(TokenType.WORD)
+        val name = consume(WORD)
         return when {
-            match(TokenType.COLONCOLON) -> {
-                // Struct::fun(options) {}
-                StructFunctionDefineStatement(name, consume(TokenType.WORD), options(), statementBody())
-            }
+//            match(TokenType.COLONCOLON) -> {
+//                // Struct::fun(options) {}
+//                StructFunctionDefineStatement(name, consume(TokenType.WORD), options(), statementBody())
+//            }
             else -> {
                 // fun(options) {}
                 // fun(options) -> {}
@@ -77,15 +91,15 @@ class Parser(private val location: String, private val name: String, private val
     private fun statement(): Node {
         return try {
              when {
-                match(TokenType.IF) -> ifElse()
-                match(TokenType.FOR) -> forTo()
-                match(TokenType.FOREACH) -> foreach()
-                match(TokenType.REPEAT) -> repeat()
-                match(TokenType.DO) -> doUntil()
-                match(TokenType.MATCH) -> match()
-                match(TokenType.RETURN) -> ret()
-                match(TokenType.ERROR) -> error()
-                match(TokenType.EXTRACT) -> extract()
+                match(IF) -> ifElse()
+                match(FOR) -> forTo()
+                match(FOREACH) -> foreach()
+                match(REPEAT) -> repeat()
+                match(DO) -> doUntil()
+                match(MATCH) -> match()
+                match(RETURN) -> ret()
+                match(ERROR) -> error()
+                match(EXTRACT) -> extract()
                 else -> {
                     val variable = variable()
                     val current = current()
@@ -93,7 +107,7 @@ class Parser(private val location: String, private val name: String, private val
                     if (variable is FunctionalChainExpression || variable is UnaryExpression) {
                         ExpressionStatement(variable)
                     }
-                    else if (AssignOperators.contains(current().type)) {
+                    else if (AssignOperators.contains(current.type)) {
                         AssignmentStatement(variable, expression(), current)
                     }
                     else throw error(current, "$'{current.text}' not allowed here!")
@@ -101,8 +115,12 @@ class Parser(private val location: String, private val name: String, private val
             }
         }
         catch (e: ParseException) {
+            throw e
+/*
+            println(e)
             errors += e
             recover()
+*/
         }
     }
 
@@ -124,7 +142,7 @@ class Parser(private val location: String, private val name: String, private val
         val condition = expression()
         val ifBody = statementOrBlock()
 
-        return if (match(TokenType.ELSE)) {
+        return if (match(ELSE)) {
             IfElseStatement(condition, ifBody)
         }
         else {
@@ -134,12 +152,12 @@ class Parser(private val location: String, private val name: String, private val
     }
 
     private fun forTo() : Node {
-        val variable = consume(TokenType.WORD)
-        consume(TokenType.EQ)
+        val variable = consume(WORD)
+        consume(EQ)
         val initialValue = expression()
 
         val type =
-                if (match(TokenType.TO)) ForStatement.Type.TO
+                if (match(TO)) ForStatement.Type.TO
                 else ForStatement.Type.DOWN_TO
 
         val finalValue = expression()
@@ -150,24 +168,24 @@ class Parser(private val location: String, private val name: String, private val
 
     private fun foreach() : Node {
 
-        val value = consume(TokenType.WORD)
+        val value = consume(WORD)
 
-        if (match(TokenType.COMMA)) {
+        if (match(COMMA)) {
             return foreachMap(value)
         }
 
-        consume(TokenType.COLON)
+        consume(COLON)
         val expr = expression()
         val body = statementOrBlock()
         return ForeachStatement(value, expr, body)
     }
 
     private fun foreachMap(value: Token) : Node {
-        val key = consume(TokenType.WORD)
-        consume(TokenType.COLON)
+        val key = consume(WORD)
+        consume(COLON)
         val expr = expression()
         val body = statementOrBlock()
-        return ForeachMapStatement(key, value, expr, body)
+        return ForeachMapStatement(value, key, expr, body)
     }
 
     private fun repeat() : Node {
@@ -178,14 +196,14 @@ class Parser(private val location: String, private val name: String, private val
 
     private fun doUntil() : Node {
         val body = statementOrBlock()
-        consume(TokenType.UNTIL)
+        consume(UNTIL)
         val condition = expression()
-        return RepeatStatement(condition, body)
+        return DoUntilStatement(condition, body)
     }
 
     private fun extract() : Node {
         val options = options()
-        consume(TokenType.EQ)
+        consume(EQ)
         val extractingValue = expression()
         return ExtractStatement(options, extractingValue)
     }
@@ -198,11 +216,11 @@ class Parser(private val location: String, private val name: String, private val
         val expression = expression()
         val cases = ArrayList<MatchStatement.Case>()
 
-        consume(TokenType.LBRACE)
+        consume(LBRACE)
 
-        while (!match(TokenType.RBRACE)) {
+        while (!match(RBRACE)) {
             val value = expression()
-            consume(TokenType.FUNCTIONAL)
+            consume(FUNCTIONAL)
             val body = statementOrBlock()
 
             cases += MatchStatement.Case(value, body)
@@ -217,9 +235,9 @@ class Parser(private val location: String, private val name: String, private val
 
     private fun ternary(): Node {
         val result = logicalOr()
-        if (match(TokenType.QUESTION)) {
+        if (match(QUESTION)) {
             val trueExpr = expression()
-            consume(TokenType.COLON)
+            consume(COLON)
             val falseExpr = expression()
             return TernaryExpression(result, trueExpr, falseExpr)
         }
@@ -229,7 +247,7 @@ class Parser(private val location: String, private val name: String, private val
     private fun logicalOr(): Node {
         var result = logicalAnd()
         while (true) {
-            if (match(TokenType.BARBAR)) {
+            if (match(BARBAR)) {
                 result = BinaryExpression(Operator.OR, result, logicalAnd())
                 continue
             }
@@ -241,7 +259,7 @@ class Parser(private val location: String, private val name: String, private val
     private fun logicalAnd(): Node {
         var result = bitwiseOr()
         while (true) {
-            if (match(TokenType.AMPAMP)) {
+            if (match(AMPAMP)) {
                 result = BinaryExpression(Operator.AND, result, bitwiseOr())
                 continue
             }
@@ -253,7 +271,7 @@ class Parser(private val location: String, private val name: String, private val
     private fun bitwiseOr(): Node {
         var expression = bitwiseXor()
         while (true) {
-            if (match(TokenType.BAR)) {
+            if (match(BAR)) {
                 expression = BinaryExpression(Operator.OR, expression, bitwiseXor())
                 continue
             }
@@ -265,7 +283,7 @@ class Parser(private val location: String, private val name: String, private val
     private fun bitwiseXor(): Node {
         var expression = bitwiseAnd()
         while (true) {
-            if (match(TokenType.CARET)) {
+            if (match(CARET)) {
                 expression = BinaryExpression(Operator.XOR, expression, bitwiseAnd())
                 continue
             }
@@ -277,7 +295,7 @@ class Parser(private val location: String, private val name: String, private val
     private fun bitwiseAnd(): Node {
         var expression = equality()
         while (true) {
-            if (match(TokenType.AMP)) {
+            if (match(AMP)) {
                 expression = BinaryExpression(Operator.AND, expression, equality())
                 continue
             }
@@ -289,10 +307,10 @@ class Parser(private val location: String, private val name: String, private val
     private fun equality(): Node {
         val result = conditional()
         return when {
-            match(TokenType.EQEQ) -> {
+            match(EQEQ) -> {
                 BinaryExpression(Operator.EQUALS, result, conditional())
             }
-            else -> if (match(TokenType.EXCLEQ)) {
+            else -> if (match(EXCLEQ)) {
                 BinaryExpression(Operator.NOT_EQUALS, result, conditional())
             }
             else result
@@ -303,19 +321,19 @@ class Parser(private val location: String, private val name: String, private val
         var result = shift()
         loop@ while (true) {
             when {
-                match(TokenType.LT) -> {
+                match(LT) -> {
                     result = BinaryExpression(Operator.LT, result, shift())
                     continue@loop
                 }
-                match(TokenType.LTEQ) -> {
+                match(LTEQ) -> {
                     result = BinaryExpression(Operator.LTEQ, result, shift())
                     continue@loop
                 }
-                match(TokenType.GT) -> {
+                match(GT) -> {
                     result = BinaryExpression(Operator.GT, result, shift())
                     continue@loop
                 }
-                match(TokenType.GTEQ) -> {
+                match(GTEQ) -> {
                     result = BinaryExpression(Operator.GTEQ, result, shift())
                     continue@loop
                 }
@@ -329,15 +347,15 @@ class Parser(private val location: String, private val name: String, private val
         var expression = additive()
         loop@ while (true) {
             when {
-                match(TokenType.LTLT) -> {
+                match(LTLT) -> {
                     expression = BinaryExpression(Operator.LSHIFT, expression, additive())
                     continue@loop
                 }
-                match(TokenType.GTGT) -> {
+                match(GTGT) -> {
                     expression = BinaryExpression(Operator.RSHIFT, expression, additive())
                     continue@loop
                 }
-                match(TokenType.GTGTGT) -> {
+                match(GTGTGT) -> {
                     expression = BinaryExpression(Operator.URSHIFT, expression, additive())
                     continue@loop
                 }
@@ -351,15 +369,15 @@ class Parser(private val location: String, private val name: String, private val
         var result = multiplicative()
         loop@ while (true) {
             when {
-                match(TokenType.PLUS) -> {
+                match(PLUS) -> {
                     result = BinaryExpression(Operator.ADD, result, multiplicative())
                     continue@loop
                 }
-                match(TokenType.MINUS) -> {
+                match(MINUS) -> {
                     result = BinaryExpression(Operator.SUBTRACT, result, multiplicative())
                     continue@loop
                 }
-                match(TokenType.COLONCOLON) -> {
+                match(COLONCOLON) -> {
                     result = BinaryExpression(Operator.PUSH, result, multiplicative())
                     continue@loop
                 }
@@ -373,15 +391,15 @@ class Parser(private val location: String, private val name: String, private val
         var result = unary()
         loop@ while (true) {
             when {
-                match(TokenType.STAR) -> {
+                match(STAR) -> {
                     result = BinaryExpression(Operator.MULTIPLY, result, unary())
                     continue@loop
                 }
-                match(TokenType.SLASH) -> {
+                match(SLASH) -> {
                     result = BinaryExpression(Operator.DIVIDE, result, unary())
                     continue@loop
                 }
-                match(TokenType.PERCENT) -> {
+                match(PERCENT) -> {
                     result = BinaryExpression(Operator.REMAINDER, result, unary())
                     continue@loop
                 }
@@ -393,11 +411,11 @@ class Parser(private val location: String, private val name: String, private val
 
     private fun unary(): Node {
         return when {
-            match(TokenType.MINUS) -> UnaryExpression(Operator.NEGATE, primary())
-            match(TokenType.EXCL) -> UnaryExpression(Operator.NOT, primary())
-            match(TokenType.TILDE) -> UnaryExpression(Operator.COMPLEMENT, primary())
-            match(TokenType.COLONCOLON) -> FunctionReferenceExpression(consume(TokenType.WORD))
-            match(TokenType.PLUS) -> primary()
+            match(MINUS) -> UnaryExpression(Operator.NEGATE, primary())
+            match(EXCL) -> UnaryExpression(Operator.NOT, primary())
+            match(TILDE) -> UnaryExpression(Operator.COMPLEMENT, primary())
+            match(COLONCOLON) -> FunctionReferenceExpression(consume(WORD))
+            match(PLUS) -> primary()
             else -> primary()
         }
     }
@@ -409,10 +427,10 @@ class Parser(private val location: String, private val name: String, private val
             // if returned result is Lambda, not a Empty value, then return result value
             (result != EmptyNode) -> result
             // (expr)
-            match(TokenType.LPAREN) -> variableSuffix(expressionInParens())
+            match(LPAREN) -> variableSuffix(expressionInParens())
             // new SomeInstance()
-            match(TokenType.LBRACKET) -> variableSuffix(array())
-            match(TokenType.LBRACE) -> variableSuffix(map())
+            match(LBRACKET) -> variableSuffix(array())
+            match(LBRACE) -> variableSuffix(map())
 
             else -> variable()
         }
@@ -420,7 +438,7 @@ class Parser(private val location: String, private val name: String, private val
 
     private fun expressionInParens(): Node {
         val expression = expression()
-        match(TokenType.RPAREN)
+        match(RPAREN)
         return variableSuffix(expression)
     }
 
@@ -428,12 +446,12 @@ class Parser(private val location: String, private val name: String, private val
         // [1, 2, 3, 4, 5, ...]
         val elements = NodeList()
         // if not reach ']'
-        if (!match(TokenType.RBRACKET))
+        if (!match(RBRACKET))
             while(true) {
                 elements += expression()
                 // after expression must be ] or comma
-                if (match(TokenType.RBRACKET)) break
-                consume(TokenType.COMMA)
+                if (match(RBRACKET)) break
+                consume(COMMA)
             }
 
         return ArrayExpression(elements)
@@ -444,16 +462,16 @@ class Parser(private val location: String, private val name: String, private val
         val keys = NodeList()
         val values = NodeList()
         // if not reach '}'
-        if (!match(TokenType.RBRACE))
+        if (!match(RBRACE))
             while(true) {
                 // key : value
                 keys += expression()
-                consume(TokenType.COLON)
+                consume(COLON)
                 values += expression()
 
                 // after key:value must be } or comma
-                if (match(TokenType.RBRACE)) break
-                consume(TokenType.COMMA)
+                if (match(RBRACE)) break
+                consume(COMMA)
             }
 
         return MapExpression(keys, values)
@@ -466,17 +484,17 @@ class Parser(private val location: String, private val name: String, private val
         try {
             when {
                 // (args) ->
-                lookMatch(0, TokenType.LPAREN) -> {
+                lookMatch(0, LPAREN) -> {
                     val options = options()
-                    if (lookMatch(0, TokenType.FUNCTIONAL)) return LambdaExpression(options, statementBody())
+                    if (lookMatch(0, FUNCTIONAL)) return LambdaExpression(options, statementBody())
                 }
                 // arg ->
-                lookMatch(0, TokenType.WORD) -> {
-                    val options = Options(consume(TokenType.WORD))
+                lookMatch(0, WORD) -> {
+                    val options = Options(consume(WORD))
                     return LambdaExpression(options, statementBody())
                 }
                 // ->
-                lookMatch(0, TokenType.FUNCTIONAL) -> return LambdaExpression(Options(), statementBody())
+                lookMatch(0, FUNCTIONAL) -> return LambdaExpression(Options(), statementBody())
             }
         }
         catch (e: ParseException) {}
@@ -488,15 +506,15 @@ class Parser(private val location: String, private val name: String, private val
 
     private fun variable(): Node {
         return when {
-            lookMatch(0, TokenType.WORD) -> unknownWords()
-            match(TokenType.THIS) -> variableSuffix(ValueExpression(prev()))
-            match(TokenType.NEW) -> variableSuffix(newInstance())
+            lookMatch(0, WORD) -> unknownWords()
+            match(THIS) -> variableSuffix(ValueExpression(prev()))
+            match(NEW) -> variableSuffix(newInstance())
             else -> value()
         }
     }
 
     private fun newInstance() : Node {
-        val struct = consume(TokenType.WORD)
+        val struct = consume(WORD)
         val arguments = arguments()
         return NewInstanceExpression(struct, arguments)
     }
@@ -504,8 +522,8 @@ class Parser(private val location: String, private val name: String, private val
     private fun unknownWords(): Node {
         val words: MutableList<Token> = ArrayList()
         while (true) {
-            words += consume(TokenType.WORD)
-            if (!match(TokenType.DOT)) break
+            words += consume(WORD)
+            if (!match(DOT)) break
         }
         return variableSuffix(UnknownWordsExpression(words))
     }
@@ -515,27 +533,27 @@ class Parser(private val location: String, private val name: String, private val
 
         loop@ while (true) {
             result = when {
-                lookMatch(0, TokenType.LPAREN) -> {
+                lookMatch(0, LPAREN) -> {
                     FunctionalChainExpression(result, arguments())
                 }
-                match(TokenType.DOT) && result is ValueExpression -> {
-                    UnknownWordsExpression(mutableListOf(consume(TokenType.WORD)))
+                match(DOT) && result is ValueExpression -> {
+                    UnknownWordsExpression(mutableListOf(consume(WORD)))
                 }
-                match(TokenType.DOT) -> {
-                    FieldAccessExpression(result, consume(TokenType.WORD))
+                match(DOT) -> {
+                    FieldAccessExpression(result, consume(WORD))
                 }
-                match(TokenType.LBRACKET) -> {
+                match(LBRACKET) -> {
                     val index = expression()
-                    consume(TokenType.RBRACKET)
+                    consume(RBRACKET)
                     ArrayAccessExpression(result, index)
                 }
-                match(TokenType.COLONCOLON) -> {
-                    ObjectFunctionReferenceExpression(result, consume(TokenType.WORD))
+                match(COLONCOLON) -> {
+                    ObjectFunctionReferenceExpression(result, consume(WORD))
                 }
-                match(TokenType.PLUSPLUS) -> {
+                match(PLUSPLUS) -> {
                     UnaryExpression(Operator.INC, result)
                 }
-                match(TokenType.MINUSMINUS) -> {
+                match(MINUSMINUS) -> {
                     UnaryExpression(Operator.DEC, result)
                 }
                 else -> break@loop
@@ -546,14 +564,14 @@ class Parser(private val location: String, private val name: String, private val
 
     private fun value(): Node {
         val current = get(0)
-        if (match(TokenType.INTEGER)
-                || match(TokenType.FLOAT)
-                || match(TokenType.INTEGER)
-                || match(TokenType.TEXT)
-                || match(TokenType.HEX_NUMBER)
-                || match(TokenType.TRUE)
-                || match(TokenType.NIL)
-                || match(TokenType.FALSE)
+        if (match(INTEGER)
+                || match(FLOAT)
+                || match(INTEGER)
+                || match(TEXT)
+                || match(HEX_NUMBER)
+                || match(TRUE)
+                || match(NIL)
+                || match(FALSE)
         ) {
             return ValueExpression(current)
         }
@@ -562,40 +580,45 @@ class Parser(private val location: String, private val name: String, private val
 
     private fun options(): Options {
         val options = Options()
-        consume(TokenType.LPAREN)
-        while (match(TokenType.RPAREN)) {
-            options += consume(TokenType.WORD)
-            consume(TokenType.COMMA)
-        }
+        consume(LPAREN)
+
+        if (!match(RPAREN))
+            while (true) {
+                options += consume(WORD)
+                if (match(RPAREN)) break
+                consume(COMMA)
+            }
+
         return options
     }
 
     private fun arguments(): NodeList {
         val arguments = NodeList()
-        consume(TokenType.LPAREN)
+        consume(LPAREN)
 
-        while (true) {
-            if (match(TokenType.RPAREN)) break
+        if (!match(RPAREN))
+            while (true) {
+                arguments.add(expression())
+                if (match(RPAREN)) break
+                match(COMMA)
+            }
 
-            arguments.add(expression())
-            match(TokenType.COMMA)
-        }
         return arguments
     }
 
     private fun block(): Block {
         val block = Block()
-        consume(TokenType.LBRACE)
-        while (!match(TokenType.RBRACE)) block += statement()
+        consume(LBRACE)
+        while (!match(RBRACE)) block += statement()
         return block
     }
 
     private fun statementBody(): Node {
-        return if (match(TokenType.FUNCTIONAL)) ReturnStatement(expression()) else block()
+        return if (match(FUNCTIONAL)) ReturnStatement(expression()) else block()
     }
 
     private fun statementOrBlock(): Node {
-        return if (lookMatch(0, TokenType.LBRACE)) block() else statement()
+        return if (lookMatch(0, LBRACE)) block() else statement()
     }
 
     private fun prev(): Token {
@@ -613,7 +636,7 @@ class Parser(private val location: String, private val name: String, private val
     private fun consume(type: TokenType): Token {
         val current = get(0)
         if (type !== current.type) {
-            throw ParseException(current, "'" + type.text + "' expected")
+            throw ParseException(current, "'${type.text}' expected, but found '${current.type.text}'")
         }
         pos++
         return current

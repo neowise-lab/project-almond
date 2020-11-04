@@ -8,12 +8,10 @@ class Block : NodeList() {
     }
 
     override fun toString(): String {
-        return buildString {
-            append("{")
-            forEach {
+        return "{ \n" + buildString {
+            this@Block.forEach {
                 append("\t $it\n")
             }
-            append("}\n")
-        }
+        } + "}\n"
     }
 }

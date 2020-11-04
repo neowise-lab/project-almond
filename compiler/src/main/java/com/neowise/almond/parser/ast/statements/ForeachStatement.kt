@@ -9,4 +9,8 @@ class ForeachStatement(val variable: Token, val collection: Node, val body: Node
     override fun accept(visitor: Visitor) {
         visitor.visit(this)
     }
+
+    override fun toString(): String {
+        return "foreach($variable : $collection) $body"
+    }
 }

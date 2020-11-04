@@ -9,4 +9,8 @@ class UsingStatement(val text: Token) : Node {
     override fun accept(visitor: Visitor) {
         visitor.visit(this)
     }
+
+    override fun toString(): String {
+        return "using \"${text.text}\""
+    }
 }

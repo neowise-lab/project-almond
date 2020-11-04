@@ -10,8 +10,8 @@ open class NodeList : ArrayList<Node>(), Node {
 
     override fun toString(): String {
         return buildString {
-            forEach {
-                append("\t $it")
+            this@NodeList.forEach {
+                append("\t $it \n")
             }
         }
     }

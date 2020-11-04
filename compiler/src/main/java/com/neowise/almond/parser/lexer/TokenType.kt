@@ -17,7 +17,7 @@ enum class TokenType(val text: String) {
     ELSE("else"),
     FOR("for"),
     TO("to"),
-    DOWN_TO("downTo"),
+    DOWN_TO("downto"),
 
     FOREACH("foreach"),
     REPEAT("repeat"),
@@ -29,7 +29,7 @@ enum class TokenType(val text: String) {
     CONTINUE("continue"),
 
     STRUCT("struct"),
-    DEFINE("define"),
+    FUNC("func"),
     VAR("var"),
     CONST("const"),
     RETURN("return"),

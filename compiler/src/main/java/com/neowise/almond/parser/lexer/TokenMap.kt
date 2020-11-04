@@ -6,3 +6,11 @@ open class TokenMap : HashMap<String, TokenType>() {
         this[value.text] = value
     }
 }
+
+public fun tokenMapOf(vararg elements: TokenType): TokenMap {
+    val map = TokenMap()
+    for(element in elements) {
+        map += element
+    }
+    return map
+}

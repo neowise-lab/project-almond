@@ -7,4 +7,8 @@ class RepeatStatement(val condition: Node, val body: Node) : Node {
     override fun accept(visitor: Visitor) {
         visitor.visit(this)
     }
+
+    override fun toString(): String {
+        return "repeat($condition) $body"
+    }
 }

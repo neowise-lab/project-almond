@@ -1,0 +1,15 @@
+using "std"
+using "std/math"
+
+var abc = 123
+const Pi = 3.14
+
+struct Point(x, y) {
+    func string() {
+        return x + " : " + y
+    }
+}
+
+func main() {
+    println("HelloWorld")
+}

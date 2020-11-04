@@ -10,8 +10,16 @@ class ForStatement(val variable: Token, val type: Type, val initialValue: Node, 
         visitor.visit(this)
     }
 
-    enum class Type {
-        TO,
-        DOWN_TO
+    override fun toString(): String {
+        return "for(${variable.text} : $initialValue $type $finalValue) $body"
+    }
+
+    enum class Type(val text: String) {
+        TO("to"),
+        DOWN_TO("downto");
+
+        override fun toString(): String {
+            return text;
+        }
     }
 }

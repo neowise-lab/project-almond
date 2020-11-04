@@ -10,5 +10,14 @@ class MatchStatement(val expression: Node, val cases: List<Case>) : Node {
         visitor.visit(this)
     }
 
-    class Case(val value: Node, val body: Node)
+    override fun toString(): String {
+        return "match($expression) { \n " + buildString {
+            cases.forEach {
+                append("${it.value} -> ${it.body} \n")
+            }
+        }
+    }
+
+    class Case(val value: Node, val body: Node) {
+    }
 }
