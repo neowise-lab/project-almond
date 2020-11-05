@@ -12,8 +12,11 @@ class UnknownWordsExpression(val words: List<Token>) : Node {
 
     override fun toString(): String {
         return buildString {
-            words.forEach {
-                append("$it.")
+            words.forEachIndexed { index, token ->
+                if (index > 0) {
+                    append('.')
+                }
+                append("$token")
             }
         }
     }

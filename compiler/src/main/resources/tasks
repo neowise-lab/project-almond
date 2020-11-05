@@ -4,15 +4,15 @@ test:
     * globals (var/const)
     * struct
 
-    arrays/access
-    maps
-    fields
-    functional chains
-    func/obj func refs
+    * arrays/access
+    * chain access
+    * maps
+    * fields
+    * functional chains
+    * func/obj func refs
     lambdas
     newInstance
     ternary
-    chain access
 
     variables
     assignment

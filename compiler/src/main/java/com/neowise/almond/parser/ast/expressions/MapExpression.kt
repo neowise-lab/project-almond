@@ -14,8 +14,8 @@ class MapExpression(val keys: NodeList, val values: NodeList) : Node {
         return "{" + buildString {
             for ((index, key) in keys.withIndex()) {
                 val value = values[index]
-
-                append("$key : $value, ")
+                if (index > 0) append(", ")
+                append("$key : $value")
             }
         } + "}"
     }

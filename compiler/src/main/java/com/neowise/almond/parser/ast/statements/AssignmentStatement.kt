@@ -11,6 +11,7 @@ class AssignmentStatement(val variable: Node, val expression: Node, val operator
     }
 
     override fun toString(): String {
-        return "$variable ${operator.text} $expression"
+        println("assignment $variable ${operator.text} $expression === $operator")
+        return "$variable $operator $expression"
     }
 }

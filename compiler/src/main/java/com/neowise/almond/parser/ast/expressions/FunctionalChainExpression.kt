@@ -12,8 +12,9 @@ class FunctionalChainExpression(val expr: Node, val arguments: NodeList) : Node 
 
     override fun toString(): String {
         return "$expr(" + buildString {
-            arguments.forEach {
-                append("$it, ")
+            arguments.forEachIndexed { index, node ->
+                if (index > 0) append(", ")
+                append("$node")
             }
         } + ")"
     }

@@ -13,8 +13,11 @@ class ArrayExpression(val elements: NodeList) : Node {
     override fun toString(): String {
         return buildString {
             append("[")
-            elements.forEach {
-                append("$it, ")
+            elements.forEachIndexed { index, node ->
+                if (index > 0) {
+                    append(", ")
+                }
+                append("$node")
             }
             append("]")
         }

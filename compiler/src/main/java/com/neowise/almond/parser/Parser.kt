@@ -108,9 +108,10 @@ class Parser(private val location: String, private val name: String, private val
                         ExpressionStatement(variable)
                     }
                     else if (AssignOperators.contains(current.type)) {
+                        skip()
                         AssignmentStatement(variable, expression(), current)
                     }
-                    else throw error(current, "$'{current.text}' not allowed here!")
+                    else throw error(current, "'${current.text}' not allowed here!")
                 }
             }
         }

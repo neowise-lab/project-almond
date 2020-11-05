@@ -16,8 +16,9 @@ class Options(vararg options: Token) {
 
     override fun toString(): String {
         return "(" + buildString {
-            options.forEach {
-                append("$it, ")
+            options.forEachIndexed { index, token ->
+                if (index > 0) append(", ")
+                append("$token")
             }
         } + ")"
     }

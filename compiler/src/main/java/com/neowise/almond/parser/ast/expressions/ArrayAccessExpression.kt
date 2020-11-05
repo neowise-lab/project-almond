@@ -9,6 +9,6 @@ class ArrayAccessExpression(val result: Node, val index: Node) : Node {
     }
 
     override fun toString(): String {
-        return "$result [$index]"
+        return "$result[$index]"
     }
 }

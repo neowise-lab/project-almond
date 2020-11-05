@@ -1,2 +1,4 @@
 target/
 *.iml
+src/main/resources/main.alm
+src/main/resources/example.via

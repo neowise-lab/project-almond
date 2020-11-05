@@ -1,15 +1,10 @@
 using "std"
 using "std/math"
 
-var abc = 123
-const Pi = 3.14
+func main() {
 
-struct Point(x, y) {
-    func string() {
-        return x + " : " + y
+    b = -> {
     }
 }
 
-func main() {
-    println("HelloWorld")
-}
+func add(a, b) -> a + b
