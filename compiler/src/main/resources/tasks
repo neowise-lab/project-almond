@@ -4,21 +4,21 @@ test:
     * globals (var/const)
     * struct
 
+    * variables
+    * assignment
     * arrays/access
     * chain access
     * maps
     * fields
     * functional chains
     * func/obj func refs
-    lambdas
-    newInstance
-    ternary
+    * lambdas
+    * newInstance
+    * if else
+    * ternary
 
-    variables
-    assignment
-    do/until/repeat
-    error
-    extract
-    for/foreach/foreachMap
-    if else
-    match
+    * do/until/repeat
+    * error
+    * extract
+    * for/foreach/foreachMap
+    * match

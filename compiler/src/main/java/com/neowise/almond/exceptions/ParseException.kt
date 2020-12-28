@@ -5,6 +5,6 @@ import java.lang.RuntimeException
 
 class ParseException : RuntimeException {
     constructor(message: String) : super(message)
-    constructor(token: Token, e: Exception) : super("$token: $e")
-    constructor(token: Token, text: String) : super("$token: $text")
+    constructor(token: Token, e: Exception) : super("${token.row}: $e")
+    constructor(token: Token, text: String) : super("${token.row}: $text")
 }

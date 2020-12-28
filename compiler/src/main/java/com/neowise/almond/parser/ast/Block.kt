@@ -1,5 +1,6 @@
 package com.neowise.almond.parser.ast
 
+import com.neowise.almond.listItems
 import com.neowise.almond.visitors.Visitor
 
 class Block : NodeList() {
@@ -8,10 +9,6 @@ class Block : NodeList() {
     }
 
     override fun toString(): String {
-        return "{ \n" + buildString {
-            this@Block.forEach {
-                append("\t $it\n")
-            }
-        } + "}\n"
+        return "{ \n " + listItems("\n") + "} \n"
     }
 }

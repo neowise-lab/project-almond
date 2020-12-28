@@ -5,13 +5,31 @@ import com.neowise.almond.parser.ast.*
 import com.neowise.almond.parser.ast.expressions.*
 import com.neowise.almond.parser.ast.statements.*
 import com.neowise.almond.parser.lexer.Token
-import com.neowise.almond.parser.lexer.TokenType
 import com.neowise.almond.parser.lexer.TokenType.*
+import com.neowise.almond.parser.lexer.*
 import java.io.EOFException
 import java.util.*
 
 class Parser(private val location: String, private val name: String, private val tokens: List<Token>) {
 
+    companion object {
+        private val operators = hashMapOf(
+                EQ to Operator.SET,
+                PLUSEQ to Operator.ADD,
+                MINUSEQ to Operator.SUBTRACT,
+                STAREQ to Operator.MULTIPLY,
+                SLASHEQ to Operator.DIVIDE,
+                PERCENTEQ to Operator.REMAINDER,
+                AMPEQ to Operator.AND,
+                CARETEQ to Operator.XOR,
+                BAREQ to Operator.OR,
+                COLONCOLONEQ to Operator.PUSH,
+                LTLTEQ to Operator.LSHIFT,
+                GTGTEQ to Operator.RSHIFT,
+                GTGTGTEQ to Operator.URSHIFT
+        )
+    }
+    
     private val errors = mutableListOf<ParseException>()
     private var size = tokens.size
     private var pos = 0
@@ -76,9 +94,9 @@ class Parser(private val location: String, private val name: String, private val
     private fun function(): Node {
         val name = consume(WORD)
         return when {
-//            match(TokenType.COLONCOLON) -> {
+//            match(COLONCOLON) -> {
 //                // Struct::fun(options) {}
-//                StructFunctionDefineStatement(name, consume(TokenType.WORD), options(), statementBody())
+//                StructFunctionDefineStatement(name, consume(WORD), options(), statementBody())
 //            }
             else -> {
                 // fun(options) {}
@@ -91,29 +109,32 @@ class Parser(private val location: String, private val name: String, private val
     private fun statement(): Node {
         return try {
              when {
-                match(IF) -> ifElse()
-                match(FOR) -> forTo()
-                match(FOREACH) -> foreach()
-                match(REPEAT) -> repeat()
-                match(DO) -> doUntil()
-                match(MATCH) -> match()
-                match(RETURN) -> ret()
-                match(ERROR) -> error()
-                match(EXTRACT) -> extract()
-                else -> {
-                    val variable = variable()
-                    val current = current()
+                 match(CONST) -> varDefine(isConst = true)
+                 match(VAR) -> varDefine(isConst = false)
+                 match(IF) -> ifElse()
+                 match(FOR) -> forTo()
+                 match(FOREACH) -> foreach()
+                 match(REPEAT) -> repeat()
+                 match(DO) -> doUntil()
+                 match(MATCH) -> match()
+                 match(BREAK) -> breakStmt()
+                 match(CONTINUE) -> continueStmt()
+                 match(RETURN) -> ret()
+                 match(ERROR) -> error()
+                 match(EXTRACT) -> extract()
+                 else -> {
+                     val variable = expression()
+                     val current = current()
 
-                    if (variable is FunctionalChainExpression || variable is UnaryExpression) {
-                        ExpressionStatement(variable)
-                    }
-                    else if (AssignOperators.contains(current.type)) {
-                        skip()
-                        AssignmentStatement(variable, expression(), current)
-                    }
-                    else throw error(current, "'${current.text}' not allowed here!")
-                }
-            }
+                     if (operators.containsKey(current.type)) {
+                         skip()
+                         AssignmentStatement(variable, expression(), current)
+                     }
+                     else {
+                         ExpressionStatement(variable)
+                     }
+                 }
+             }
         }
         catch (e: ParseException) {
             throw e
@@ -143,7 +164,7 @@ class Parser(private val location: String, private val name: String, private val
         val condition = expression()
         val ifBody = statementOrBlock()
 
-        return if (match(ELSE)) {
+        return if (!match(ELSE)) {
             IfElseStatement(condition, ifBody)
         }
         else {
@@ -159,7 +180,10 @@ class Parser(private val location: String, private val name: String, private val
 
         val type =
                 if (match(TO)) ForStatement.Type.TO
-                else ForStatement.Type.DOWN_TO
+                else {
+                    skip()
+                    ForStatement.Type.DOWN_TO
+                }
 
         val finalValue = expression()
         val body = statementOrBlock()
@@ -202,6 +226,10 @@ class Parser(private val location: String, private val name: String, private val
         return DoUntilStatement(condition, body)
     }
 
+    private fun breakStmt(): Node = BreakStatement(last())
+
+    private fun continueStmt(): Node = ContinueStatement(last())
+
     private fun extract() : Node {
         val options = options()
         consume(EQ)
@@ -216,15 +244,20 @@ class Parser(private val location: String, private val name: String, private val
     private fun match() : Node {
         val expression = expression()
         val cases = ArrayList<MatchStatement.Case>()
-
         consume(LBRACE)
 
         while (!match(RBRACE)) {
-            val value = expression()
-            consume(FUNCTIONAL)
-            val body = statementOrBlock()
+            val current = current()
 
-            cases += MatchStatement.Case(value, body)
+            val value: Node? = when {
+                match(CASE) -> expression()
+                match(DEFAULT) -> null
+                else -> {
+                    throw ParseException(current, "case or default expected, but found '${current.type.text}'")
+                }
+            }
+            consume(COLON)
+            cases += MatchStatement.Case(value, statementOrBlock())
         }
 
         return MatchStatement(expression, cases)
@@ -487,15 +520,17 @@ class Parser(private val location: String, private val name: String, private val
                 // (args) ->
                 lookMatch(0, LPAREN) -> {
                     val options = options()
-                    if (lookMatch(0, FUNCTIONAL)) return LambdaExpression(options, statementBody())
-                }
+                    if (match(FUNCTIONAL)) return LambdaExpression(options, statementOrBlock())
+                 }
                 // arg ->
                 lookMatch(0, WORD) -> {
-                    val options = Options(consume(WORD))
-                    return LambdaExpression(options, statementBody())
+                    val word = consume(WORD)
+                    consume(FUNCTIONAL)
+                    val options = Options(word)
+                    return LambdaExpression(options, statementOrBlock())
                 }
                 // ->
-                lookMatch(0, FUNCTIONAL) -> return LambdaExpression(Options(), statementBody())
+                match(FUNCTIONAL) -> return LambdaExpression(Options(), statementOrBlock())
             }
         }
         catch (e: ParseException) {}
@@ -508,7 +543,7 @@ class Parser(private val location: String, private val name: String, private val
     private fun variable(): Node {
         return when {
             lookMatch(0, WORD) -> unknownWords()
-            match(THIS) -> variableSuffix(ValueExpression(prev()))
+            match(THIS) -> variableSuffix(ValueExpression(last()))
             match(NEW) -> variableSuffix(newInstance())
             else -> value()
         }
@@ -622,7 +657,7 @@ class Parser(private val location: String, private val name: String, private val
         return if (lookMatch(0, LBRACE)) block() else statement()
     }
 
-    private fun prev(): Token {
+    private fun last(): Token {
         return get(-1)
     }
 
@@ -645,7 +680,7 @@ class Parser(private val location: String, private val name: String, private val
 
     private fun multipleMatches(vararg types: TokenType): Boolean {
         // Remember the last position
-        val recoverPosition = pos;
+        val recoverPosition = pos
         for(type in types) {
             if (!match(type)) {
                 // if there is no match, return the last position and false

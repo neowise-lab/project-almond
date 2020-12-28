@@ -12,10 +12,10 @@ class ValueExpression(val value: Token) : Node {
     }
 
     override fun toString(): String {
-        return if (value.type == TokenType.TEXT) {
-            "\"${value.text}\""
-        }
-        else
-            value.text
+        return if (value.type == TokenType.TEXT) "'${text()}'" else text()
+    }
+
+    private fun text(): String {
+        return if (value.text.isEmpty()) value.type.text else value.text
     }
 }

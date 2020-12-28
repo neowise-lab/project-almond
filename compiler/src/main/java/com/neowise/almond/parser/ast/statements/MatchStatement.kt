@@ -2,7 +2,6 @@ package com.neowise.almond.parser.ast.statements
 
 import com.neowise.almond.parser.ast.Node
 import com.neowise.almond.visitors.Visitor
-import java.beans.Expression
 
 class MatchStatement(val expression: Node, val cases: List<Case>) : Node {
 
@@ -11,13 +10,16 @@ class MatchStatement(val expression: Node, val cases: List<Case>) : Node {
     }
 
     override fun toString(): String {
-        return "match($expression) { \n " + buildString {
-            cases.forEach {
-                append("${it.value} -> ${it.body} \n")
-            }
-        }
+        return "match($expression) { \n " +
+                buildString {
+                    cases.forEach {
+                        append("$it \n")
+                    }
+                }
     }
 
-    class Case(val value: Node, val body: Node) {
+    class Case(val value: Node?, val body: Node) {
+        override fun toString(): String =
+                (value?.toString() ?: "default") + ": " + body.toString()
     }
 }

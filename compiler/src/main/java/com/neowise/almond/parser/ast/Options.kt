@@ -1,5 +1,6 @@
 package com.neowise.almond.parser.ast
 
+import com.neowise.almond.listItems
 import com.neowise.almond.parser.lexer.Token
 
 class Options(vararg options: Token) {
@@ -15,12 +16,7 @@ class Options(vararg options: Token) {
     }
 
     override fun toString(): String {
-        return "(" + buildString {
-            options.forEachIndexed { index, token ->
-                if (index > 0) append(", ")
-                append("$token")
-            }
-        } + ")"
+        return "(" + options.listItems(", ") + ")"
     }
 
 }

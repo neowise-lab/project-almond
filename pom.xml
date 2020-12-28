@@ -9,7 +9,6 @@
     <packaging>pom</packaging>
     <version>0.1</version>
     <modules>
-        <module>core</module>
         <module>compiler</module>
         <module>runtime</module>
     </modules>
@@ -60,6 +59,4 @@
             </plugin>
         </plugins>
     </build>
-
-
 </project>

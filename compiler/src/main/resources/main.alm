@@ -1,10 +1,8 @@
-using "std"
-using "std/math"
-
 func main() {
-
-    b = -> {
+    match(id) {
+        case ab: hello
+        case cx: bvbvb
+        case zx: 1254
+        default: break
     }
 }
-
-func add(a, b) -> a + b

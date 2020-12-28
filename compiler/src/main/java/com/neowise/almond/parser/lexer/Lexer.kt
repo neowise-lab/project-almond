@@ -27,7 +27,7 @@ open class Lexer(private val source: Source) {
         )
 
         private val keywords = tokenMapOf(
-                USING, IF, ELSE, REPEAT, FOR, FOREACH, DO,
+                USING, IF, ELSE, REPEAT, FOR, FOREACH, DO, UNTIL,
                 BREAK, CONTINUE, ERROR, MATCH, STRUCT, FUNC,
                 VAR, CONST, RETURN, CASE, DEFAULT, NEW, EXTRACT,
                 TRUE, FALSE, THIS, IS, NIL

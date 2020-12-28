@@ -1,5 +1,6 @@
 package com.neowise.almond.parser.ast
 
+import com.neowise.almond.listItems
 import com.neowise.almond.visitors.Visitor
 
 open class NodeList : ArrayList<Node>(), Node {
@@ -9,10 +10,6 @@ open class NodeList : ArrayList<Node>(), Node {
     }
 
     override fun toString(): String {
-        return buildString {
-            this@NodeList.forEach {
-                append("\t $it \n")
-            }
-        }
+        return listItems(", ")
     }
 }

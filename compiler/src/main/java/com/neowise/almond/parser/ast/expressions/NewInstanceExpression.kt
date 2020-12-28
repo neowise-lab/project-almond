@@ -1,5 +1,6 @@
 package com.neowise.almond.parser.ast.expressions
 
+import com.neowise.almond.listItems
 import com.neowise.almond.parser.ast.Node
 import com.neowise.almond.parser.ast.NodeList
 import com.neowise.almond.parser.lexer.Token
@@ -12,10 +13,6 @@ class NewInstanceExpression(val struct: Token, val arguments: NodeList) : Node {
     }
 
     override fun toString(): String {
-        return "new $struct(" + buildString {
-            arguments.forEach {
-                append("$it, ")
-            }
-        } + ")"
+        return "new $struct(" + arguments.listItems(", ") + ")"
     }
 }

@@ -48,4 +48,6 @@ interface Visitor {
     fun visit(arrayExpression: ArrayExpression)
     fun visit(map: MapExpression)
     fun visit(lambda: LambdaExpression)
+    fun visit(breakStmt: BreakStatement)
+    fun visit(continueStmt: ContinueStatement)
 }
