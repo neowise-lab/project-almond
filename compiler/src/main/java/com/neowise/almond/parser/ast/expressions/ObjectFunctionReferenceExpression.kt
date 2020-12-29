@@ -4,13 +4,13 @@ import com.neowise.almond.parser.ast.Node
 import com.neowise.almond.parser.lexer.Token
 import com.neowise.almond.visitors.Visitor
 
-class ObjectFunctionReferenceExpression(val result: Node, val name: Token) : Node {
+class ObjectFunctionReferenceExpression(val target: Node, val name: Token) : Node {
 
     override fun accept(visitor: Visitor) {
         visitor.visit(this)
     }
 
     override fun toString(): String {
-        return "$result::$name"
+        return "$target::$name"
     }
 }

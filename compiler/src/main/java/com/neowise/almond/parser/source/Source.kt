@@ -1,6 +1,6 @@
 package com.neowise.almond.parser.source
 
-class Source(private val input: String) {
+class Source(val location: String, val name: String, private val input: String) {
 
      var row: Int = 0
      var col: Int = 0

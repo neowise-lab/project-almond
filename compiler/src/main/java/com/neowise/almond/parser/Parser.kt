@@ -53,6 +53,7 @@ class Parser(private val location: String, private val name: String, private val
                     else -> {
                         val current = current()
                         errors += error(current, "${current.text} not allowed here.")
+                        pos++
                         continue@loop
                     }
                 }
@@ -87,8 +88,15 @@ class Parser(private val location: String, private val name: String, private val
 
     private fun varDefine(isConst: Boolean): Node {
         val name = consume(WORD)
-        consume(EQ)
-        return VariableDefineStatement(name, expression(), isConst)
+        val expression = when {
+            isConst -> {
+                consume(EQ)
+                expression()
+            }
+            match(EQ) -> expression()
+            else -> EmptyNode
+        }
+        return VariableDefineStatement(name, expression, isConst)
     }
 
     private fun function(): Node {
@@ -534,6 +542,7 @@ class Parser(private val location: String, private val name: String, private val
             }
         }
         catch (e: ParseException) {}
+        catch (e: EOFException) {}
 
         // recover position
         pos = lastPos
@@ -541,6 +550,7 @@ class Parser(private val location: String, private val name: String, private val
     }
 
     private fun variable(): Node {
+        println("pos: $pos")
         return when {
             lookMatch(0, WORD) -> unknownWords()
             match(THIS) -> variableSuffix(ValueExpression(last()))
@@ -692,6 +702,8 @@ class Parser(private val location: String, private val name: String, private val
     }
 
     private fun match(type: TokenType): Boolean {
+        if (pos >= size) return false
+
         val current = get(0)
         if (type !== current.type) {
             return false
@@ -700,7 +712,10 @@ class Parser(private val location: String, private val name: String, private val
         return true
     }
 
-    private fun lookMatch(pos: Int, type: TokenType): Boolean = get(pos).type === type
+    private fun lookMatch(relativePosition: Int, type: TokenType): Boolean {
+        return if (pos + relativePosition >= size) false
+        else get(relativePosition).type === type
+    }
 
     private operator fun get(relativePosition: Int): Token {
         val position: Int = pos + relativePosition
