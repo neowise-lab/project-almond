@@ -1,16 +1,16 @@
-package com.neowise.almond.visitors
+package com.neowise.almond.semantics
 
 import com.neowise.almond.exceptions.ParseException
-import com.neowise.almond.metadata.Member
-import com.neowise.almond.metadata.Member.*
+import com.neowise.almond.semantics.metadata.Member.*
 import com.neowise.almond.parser.ast.Program
 import com.neowise.almond.parser.ast.statements.FunctionDefineStatement
 import com.neowise.almond.parser.ast.statements.StructStatement
 import com.neowise.almond.parser.ast.statements.VariableDefineStatement
-import com.neowise.almond.metadata.Metadata
-import com.neowise.almond.metadata.ModuleMetadata
-import com.neowise.almond.metadata.PackageMetadata
+import com.neowise.almond.semantics.metadata.Metadata
+import com.neowise.almond.semantics.metadata.ModuleMetadata
+import com.neowise.almond.semantics.metadata.PackageMetadata
 import com.neowise.almond.parser.lexer.Token
+import com.neowise.almond.visitors.AbstractVisitor
 
 class Logger : AbstractVisitor() {
 

@@ -1,4 +1,4 @@
-package com.neowise.almond.metadata
+package com.neowise.almond.semantics.metadata
 
 class Metadata {
 

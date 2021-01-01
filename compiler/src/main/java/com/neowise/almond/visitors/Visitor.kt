@@ -16,7 +16,6 @@ interface Visitor {
     fun visit(struct: StructStatement)
     fun visit(variableDefine: VariableDefineStatement)
     fun visit(functionDefine: FunctionDefineStatement)
-    fun visit(structFunctionDefine: StructFunctionDefineStatement)
     fun visit(assignment: AssignmentStatement)
 
     fun visit(returnStatement: ReturnStatement)

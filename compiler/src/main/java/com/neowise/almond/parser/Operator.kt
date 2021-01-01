@@ -1,6 +1,6 @@
 package com.neowise.almond.parser
 
-import com.neowise.almond.bytecode.Instruction;
+import bytecode.Instruction;
 
 enum class Operator(val opcode: Instruction) {
     ADD(Instruction.ADD),

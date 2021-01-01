@@ -75,12 +75,12 @@ class Parser(private val location: String, private val name: String, private val
     private fun struct(): Node {
         val name = consume(WORD)
         val options = options()
-        val functions = NodeList()
+        val functions = ArrayList<FunctionDefineStatement>()
         // {
         if (match(LBRACE))
             while (!match(RBRACE)) {
                 consume(FUNC)
-                functions += function()
+                functions.add(function())
             }
 
         return StructStatement(name, options, functions)
@@ -99,7 +99,7 @@ class Parser(private val location: String, private val name: String, private val
         return VariableDefineStatement(name, expression, isConst)
     }
 
-    private fun function(): Node {
+    private fun function(): FunctionDefineStatement {
         val name = consume(WORD)
         return when {
 //            match(COLONCOLON) -> {

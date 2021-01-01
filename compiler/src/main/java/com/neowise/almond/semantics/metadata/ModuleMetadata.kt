@@ -1,6 +1,6 @@
-package com.neowise.almond.metadata
+package com.neowise.almond.semantics.metadata
 
-import com.neowise.almond.metadata.Member.Type
+import com.neowise.almond.semantics.metadata.Member.Type
 
 class ModuleMetadata(val location: String, val moduleName: String) {
 
@@ -42,6 +42,8 @@ class ModuleMetadata(val location: String, val moduleName: String) {
         val member = members[name] ?: return false
         return member.type in types
     }
+
+    fun allMembers(): Map<String, Member> = members
 
     fun name(): String = "$location/$moduleName"
 

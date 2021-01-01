@@ -1,4 +1,4 @@
-package com.neowise.almond.metadata
+package com.neowise.almond.semantics.metadata
 
 class Member(
         val location: String,
@@ -7,9 +7,7 @@ class Member(
         val type: Type
 ) {
 
-    override fun toString(): String {
-        return type.name.toLowerCase() + " $name"
-    }
+    override fun toString(): String = type.name.toLowerCase() + " $name"
 
     enum class Type {
         STRUCT,

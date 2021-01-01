@@ -25,7 +25,9 @@ abstract class AbstractVisitor : Visitor {
     }
 
     override fun visit(struct: StructStatement) {
-        struct.functions.accept(this)
+       for(function in struct.functions) {
+           function.accept(this)
+       }
     }
 
     override fun visit(variableDefine: VariableDefineStatement) {
@@ -34,10 +36,6 @@ abstract class AbstractVisitor : Visitor {
 
     override fun visit(functionDefine: FunctionDefineStatement) {
         functionDefine.body.accept(this)
-    }
-
-    override fun visit(structFunctionDefine: StructFunctionDefineStatement) {
-        structFunctionDefine.body.accept(this)
     }
 
     override fun visit(assignment: AssignmentStatement) {

@@ -4,7 +4,7 @@ import com.neowise.almond.parser.Parser
 import com.neowise.almond.parser.ast.Program
 import com.neowise.almond.parser.lexer.Lexer
 import com.neowise.almond.parser.source.SourceLoader
-import com.neowise.almond.visitors.Logger
+import com.neowise.almond.semantics.Logger
 
 fun main(args: Array<String>) {
     val logger = Logger()

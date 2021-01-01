@@ -8,4 +8,5 @@ class ParseException : RuntimeException {
     constructor(token: Token, e: Exception) : super("${token.row}: $e")
     constructor(token: Token, text: String) : super("${token.row}: $text")
     constructor(tag: String, token: Token, text: String) : super("$tag -> ${token.row}: $text")
+    constructor(tag: String, token: Token, text: String, module: String) : super("$tag -> $module ${token.row}: $text")
 }

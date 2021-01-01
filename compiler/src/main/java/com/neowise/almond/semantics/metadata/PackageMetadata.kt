@@ -1,4 +1,4 @@
-package com.neowise.almond.metadata
+package com.neowise.almond.semantics.metadata
 
 class PackageMetadata(private val location: String) {
 
@@ -17,6 +17,8 @@ class PackageMetadata(private val location: String) {
     fun get(name: String): ModuleMetadata {
         return modules[name]!!
     }
+
+    fun getAll() : Map<String, ModuleMetadata> = modules
 
     override fun toString(): String {
         return buildString {

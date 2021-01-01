@@ -4,11 +4,17 @@ import com.neowise.almond.parser.ast.Node
 import com.neowise.almond.parser.ast.NodeList
 import com.neowise.almond.parser.ast.Options
 import com.neowise.almond.parser.lexer.Token;
+import com.neowise.almond.visitors.ResultVisitor
 import com.neowise.almond.visitors.Visitor
 
-class StructStatement(val name: Token, val options: Options, val functions: NodeList) : Node {
+class StructStatement(val name: Token, val options: Options, val functions: List<FunctionDefineStatement>) : Node {
+
     override fun accept(visitor: Visitor) {
         visitor.visit(this)
+    }
+
+    override fun accept(visitor: ResultVisitor): Node {
+        return visitor.visit(this)
     }
 
     override fun toString(): String {
